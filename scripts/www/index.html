@@ -1,88 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="./static/css/styles.css" />
-        <meta
-            http-equiv="Content-Security-Policy"
-            content="default-src * 'unsafe-inline' 'unsafe-eval'"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Tauri App</title>
-        <script src="./static/js/main.js"></script>
-    </head>
-    <body>
-        <main class="container">
-            <h1>Welcome to TauriMan</h1>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>取餐叫号器</title>
+<style>
+body {
+  margin:0;
+  font-family:微软雅黑,sans-serif;
+  background:#ff7043;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:100vh;
+  color:white;
+  padding-top:20px;
+  box-sizing:border-box;
+}
 
-            <div class="row">
-                <a
-                    href="https://tauri.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <img
-                        src="./assets/tauri.svg"
-                        class="logo tauri"
-                        alt="Tauri logo"
-                    />
-                </a>
-                <a
-                    href="https://pakeplus.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <img
-                        src="https://hk.gh-proxy.org/https://github.com/Sjj1024/PakePlus/blob/main/app-icon.png"
-                        class="logo vanilla"
-                        alt="JavaScript logo"
-                    />
-                </a>
-            </div>
-            <p>Click to get data</p>
-            <form class="row" id="greet-form">
-                <input id="greet-input" placeholder="Enter a name..." />
-                <button type="submit" id="getdata">GET DATA</button>
-            </form>
-            <div class="functions">
-                <a href="./book.html" target="_self">跳转到book.html</a>
-                <a
-                    href="https://www.baidu.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >跳到百度blank
-                </a>
-                <a
-                    href="https://www.baidu.com"
-                    target="_self"
-                    rel="noopener noreferrer"
-                >
-                    跳到百度self
-                </a>
-                <button onclick="sayHello()">点击我</button>
-                <button onclick="sayHello()">下载文件</button>
-                <button onclick="sayHello()">上传文件</button>
-                <button onclick="sayHello()">访问相机</button>
-                <button onclick="sayHello()">访问麦克风</button>
-                <button onclick="sayHello()">访问相册</button>
-                <button class="btn" onclick="openWechat()">打开微信</button>
-                <button class="btn" onclick="openWechatScan()">
-                    打开扫一扫
-                </button>
-                <button class="btn" onclick="openZhihu()">打开知乎</button>
-                <button onclick="sayHello()">打开抖音</button>
-                <button onclick="sayHello()">用浏览器打开</button>
-                <button>打开知乎</button>
-            </div>
-            <p id="greet-msg"></p>
-            <img src="./static/image/cursor.jpeg" alt="logo" />
-            <video
-                src="https://hk.gh-proxy.org/https://github.com/Sjj1024/PakePlus/blob/main/docs/static/videos/pakeplus.mp4"
-                autoplay
-                controls
-                style="width: 100%; height: 100%"
-            ></video>
-            <audio src="./static/music/yin.mp3" controls></audio>
-        </main>
-    </body>
+#number{
+  font-size:22vw;
+  margin-bottom:15px;
+  font-weight:bold;
+  text-align:center;
+}
+
+.keypad{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  width:95%;
+  max-width:400px;
+  margin-bottom:15px;
+}
+
+button{
+  font-size:7vw;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  background:rgba(255,255,255,0.25);
+  color:white;
+  text-align:center;
+}
+
+button:active{
+  transform:scale(0.95);
+}
+
+/* 外卖按钮单独样式 */
+#deliveryBtn{
+  width:60%;
+  background:#ffd54f;
+  color:#333;
+  font-size:6vw;
+  margin:0 auto 10px auto;
+  border-radius:10px;
+}
+
+/* 暂停按钮 */
+#pauseBtn{
+  width:40%;
+  background:#b0bec5;
+  color:#333;
+  font-size:5vw;
+  margin:0 auto;
+  border-radius:10px;
+  padding:10px 0;
+}
+</style>
+</head>
+<body>
+
+<div id="number">1</div>
+
+<div class="keypad">
+  <button onclick="callNum(1)">1</button>
+  <button onclick="callNum(2)">2</button>
+  <button onclick="callNum(3)">3</button>
+  <button onclick="callNum(4)">4</button>
+  <button onclick="callNum(5)">5</button>
+  <button onclick="callNum(6)">6</button>
+  <button onclick="callNum(7)">7</button>
+  <button onclick="callNum(8)">8</button>
+  <button onclick="callNum(9)">9</button>
+  <button onclick="callNum(10)" style="grid-column: span 3;">10</button>
+</div>
+
+<button id="deliveryBtn" onclick="callDelivery()">外卖</button>
+<button id="pauseBtn" onclick="pauseAudio()">暂停</button>
+
+<script>
+let currentAudio1 = null;
+let currentAudio2 = null;
+let delayTimer = null;
+
+// 更新显示数字
+function update(num){
+  const el = document.getElementById("number");
+  el.textContent = num;
+  el.style.transform="scale(1.15)";
+  setTimeout(()=>el.style.transform="scale(1)",150);
+}
+
+// 播放 mp3 两遍
+function playAudio(fileName){
+  // 停止上一条
+  stopAudio();
+
+  currentAudio1 = new Audio(fileName);
+  currentAudio1.play().then(()=>{
+    delayTimer = setTimeout(()=>{
+      currentAudio2 = new Audio(fileName);
+      currentAudio2.play();
+    }, 3000); // 延迟 3 秒
+  }).catch(()=>{
+    alert("无法播放音频，请检查文件路径和浏览器权限");
+  });
+}
+
+// 停止播放
+function stopAudio(){
+  if(currentAudio1){
+    currentAudio1.pause();
+    currentAudio1.currentTime = 0;
+    currentAudio1 = null;
+  }
+  if(currentAudio2){
+    currentAudio2.pause();
+    currentAudio2.currentTime = 0;
+    currentAudio2 = null;
+  }
+  if(delayTimer){
+    clearTimeout(delayTimer);
+    delayTimer = null;
+  }
+}
+
+// 点击数字叫号
+function callNum(num){
+  update(num);
+  playAudio(num+".mp3");
+}
+
+// 外卖按钮
+function callDelivery(){
+  update("外卖");
+  playAudio("外卖.mp3");
+}
+
+// 暂停按钮
+function pauseAudio(){
+  stopAudio();
+}
+</script>
+
+</body>
 </html>
